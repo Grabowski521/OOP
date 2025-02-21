@@ -6,8 +6,7 @@ class Product:
         self.quantity = quantity
 
     def __str__(self):
-        return (f"Product(name={self.name}, description={self.description}, "
-                f"price={self.price}, quantity={self.quantity})")
+        return (f"Product(name={self.name}, description={self.description}, "f"price={self.price}, quantity={self.quantity})")
 
 
 class Category:

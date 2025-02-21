@@ -17,7 +17,6 @@ class TestProduct(unittest.TestCase):
 
 class TestCategory(unittest.TestCase):
     def setUp(self):
-        # Сброс счетчиков перед каждым тестом
         Category.total_categories = 0
         Category.total_products = 0
 
@@ -67,7 +66,7 @@ class TestCategory(unittest.TestCase):
         self.assertEqual(Category.total_products, 1)
 
         with self.assertRaises(ValueError):
-            category.remove_product(product1)  # Попытка удалить несуществующий продукт
+            category.remove_product(product1)  # Удаление несуществующего продукта
 
     def test_total_categories(self):
         category1 = Category(name="Электроника", description="Категория электронных товаров")
