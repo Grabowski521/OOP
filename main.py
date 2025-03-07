@@ -11,10 +11,25 @@ class Product:
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """Создает новый объект класса Product на основе словаря с параметрами товара)."""
+        """Создает новый объект класса Product на основе словаря с параметрами товара."""
         required_keys = {'name', 'description', 'price', 'quantity'}
         if not required_keys.issubset(product_data.keys()):
             raise ValueError(f"Необходимые ключи: {required_keys}. Полученные ключи: {product_data.keys()}")
+
+        # Проверка типов данных
+        if not isinstance(product_data['name'], str):
+            raise TypeError("Имя товара должно быть строкой.")
+        if not isinstance(product_data['description'], str):
+            raise TypeError("Описание товара должно быть строкой.")
+        if not isinstance(product_data['price'], (int, float)):
+            raise TypeError("Цена товара должна быть числом.")
+        if not isinstance(product_data['quantity'], int):
+            raise TypeError("Количество товара должно быть целым числом.")
+
+        # Добавляем проверку на неотрицательную цену
+        if product_data['price'] <= 0:
+            raise ValueError("Цена не должна быть нулевой или отрицательной.")
+
         return cls(
             name=product_data['name'],
             description=product_data['description'],
@@ -30,9 +45,17 @@ class Product:
     @price.setter
     def price(self, value: float):
         """Сеттер для цены с проверкой."""
+        if not isinstance(value, (int, float)):
+            raise TypeError("Цена должна быть числом.")
         if value <= 0:
-            raise ValueError("Цена не должна быть нулевая или отрицательная")
+            raise ValueError("Цена не должна быть нулевой или отрицательной.")
         self.__price = value
+
+    def __add__(self, other):
+        """Метод для сложения двух объектов Product."""
+        if not isinstance(other, Product):
+            raise TypeError("Можно складывать только объекты класса Product.")
+        return (self.price * self.quantity) + (other.price * other.quantity)
 
 
 class Category:
@@ -43,8 +66,6 @@ class Category:
         self.name = name
         self.description = description
         self.__products = []  # Приватный список для хранения продуктов
-
-        # Увеличиваем счетчик категорий при создании новой категории
         Category.total_categories += 1
 
     def add_product(self, product: Product):
@@ -52,17 +73,33 @@ class Category:
         if not isinstance(product, Product):
             raise ValueError("Можно добавлять только экземпляры класса Product.")
         self.__products.append(product)
-        # Увеличиваем счетчик товаров при добавлении нового продукта
         Category.total_products += 1
 
-    def remove_product(self, product: Product):
-        """Удаляет продукт из категории."""
+    def remove_product(self, product: Product, ignore_not_found: bool = False):
+        """
+        Удаляет продукт из категории.
+
+        :param product: Экземпляр класса Product для удаления.
+        :param ignore_not_found: Если True, не выбрасывает исключение, если продукт не найден.
+        """
         if product in self.__products:
             self.__products.remove(product)
-            # Уменьшаем счетчик товаров при удалении продукта
             Category.total_products -= 1
-        else:
+        elif not ignore_not_found:
             raise ValueError("Продукт не найден в категории.")
+
+    def update_product_quantity(self, product: Product, new_quantity: int):
+        """
+        Обновляет количество товара в категории.
+
+        :param product: Экземпляр класса Product.
+        :param new_quantity: Новое количество товара.
+        """
+        if product not in self.__products:
+            raise ValueError("Продукт не найден в категории.")
+        if not isinstance(new_quantity, int) or new_quantity < 0:
+            raise ValueError("Количество товара должно быть неотрицательным целым числом.")
+        product.quantity = new_quantity
 
     @property
     def products_info(self):
@@ -78,51 +115,39 @@ class Category:
 
 # Пример использования
 if __name__ == "__main__":
-    # Создаются два продукта с использованием класс-метода new_product
+    # Создание двух продуктов
     product_data1 = {
-        'name': "Ноутбук",
-        'description': "Профессиональный ноутбук",
-        'price': 1200.0,
+        'name': "Товар A",
+        'description': "Описание A",
+        'price': 100.0,
         'quantity': 10
     }
     product_data2 = {
-        'name': "Мышь",
-        'description': "Оптическая мышь",
-        'price': 25.0,
-        'quantity': 50
+        'name': "Товар B",
+        'description': "Описание B",
+        'price': 200.0,
+        'quantity': 2
     }
 
     product1 = Product.new_product(product_data1)
     product2 = Product.new_product(product_data2)
 
-    # Создание категории
-    electronics = Category(name="Электроника", description="Категория электронных товаров")
+    # Сложение двух продуктов
+    total_cost = product1 + product2
+    print(f"Общая стоимость товаров: {total_cost}")  # Вывод: 1400.0
 
-    # Добавление продуктов в категорию
+    # Остальной пример использования
+    electronics = Category(name="Электроника", description="Категория электронных товаров")
     electronics.add_product(product1)
     electronics.add_product(product2)
-
-    # Вывод информации о категории
     print(electronics)
-
-    # Вывод общего количества категорий и товаров
     print(f"Общее количество категорий: {Category.total_categories}")
     print(f"Общее количество товаров: {Category.total_products}")
-
-    # Удаление продукта из категории
-    electronics.remove_product(product1)
-
-    # Вывод информации о категории после удаления продукта
+    electronics.remove_product(product1, ignore_not_found=True)
     print(electronics)
-
-    # Вывод общего количества категорий и товаров после удаления продукта
     print(f"Общее количество категорий: {Category.total_categories}")
     print(f"Общее количество товаров: {Category.total_products}")
-
-    # Создание еще одной категории
     books = Category(name="Книги", description="Категория книг")
-
-    # Добавление продукта в новую категорию
     book_data = {
         'name': "Приключения",
         'description': "Книга о приключениях",
@@ -131,24 +156,20 @@ if __name__ == "__main__":
     }
     book1 = Product.new_product(book_data)
     books.add_product(book1)
-
-    # Вывод информации о новой категории
     print(books)
-
-    # Вывод общего количества категорий и товаров после добавления новой категории и продукта
     print(f"Общее количество категорий: {Category.total_categories}")
     print(f"Общее количество товаров: {Category.total_products}")
-
-    # Пример использования геттера products_info
     print("Список товаров в категории 'Электроника':")
     print(electronics.products_info)
-
     print("Список товаров в категории 'Книги':")
     print(books.products_info)
-
-    # Пример использования геттера и сеттера для цены
     print(f"Цена продукта {product2.name}: {product2.price}")
-    product2.price = 30.0  # Успешное обновление цены
+    product2.price = 30.0
     print(f"Цена продукта {product2.name} после обновления: {product2.price}")
-    product2.price = -10.0  # Попытка установить неправильную цену
-    print(f"Цена продукта {product2.name} после неправильной попытки обновления: {product2.price}")
+    try:
+        product2.price = -10.0
+    except ValueError as e:
+        print(f"Ошибка при установке цены: {e}")
+    print(f"Цена продукта {product2.name} после попытки некорректного обновления: {product2.price}")
+    electronics.update_product_quantity(product2, 100)
+    print(f"Новое количество товара {product2.name}: {product2.quantity}")
