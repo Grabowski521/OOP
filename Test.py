@@ -50,8 +50,7 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(total_cost, 100.0 * 10 + 200.0 * 2)
 
     def test_str_method(self):
-        """Проверка строкового представления продукта"""
-        expected_str = "Product(name=Товар A, description=Описание A, price=100.0, quantity=10)"
+        expected_str = "Товар A, 100.0 руб. Остаток: 10 шт."
         self.assertEqual(str(self.product), expected_str)
 
 
@@ -104,9 +103,24 @@ class TestCategory(unittest.TestCase):
         self.assertEqual(self.category.products_info, expected_info)
 
     def test_str_method(self):
-        """Проверка строкового представления категории"""
         self.category.add_product(self.product)
-        expected_str = "Category(name=Электроника, description=Категория электронных товаров, products=[Товар A, 100.0 руб. Остаток: 10 шт.])"
+        expected_str = "Электроника, количество продуктов: 10 шт."
+        self.assertEqual(str(self.category), expected_str)
+
+    def test_str_method_no_products(self):
+        expected_str = "Электроника, количество продуктов: 0 шт."
+        self.assertEqual(str(self.category), expected_str)
+
+    def test_str_method_multiple_products(self):
+        product2 = Product.new_product({
+            'name': "Товар B",
+            'description': "Описание B",
+            'price': 200.0,
+            'quantity': 5
+        })
+        self.category.add_product(self.product)
+        self.category.add_product(product2)
+        expected_str = "Электроника, количество продуктов: 15 шт."
         self.assertEqual(str(self.category), expected_str)
 
 

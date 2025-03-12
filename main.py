@@ -6,8 +6,7 @@ class Product:
         self.quantity = quantity
 
     def __str__(self):
-        return (f"Product(name={self.name}, description={self.description}, "
-                f"price={self.__price}, quantity={self.quantity})")
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     @classmethod
     def new_product(cls, product_data: dict):
@@ -109,8 +108,8 @@ class Category:
         return "\n".join(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт." for product in self.__products)
 
     def __str__(self):
-        return (f"Category(name={self.name}, description={self.description}, "
-                f"products=[{self.products_info}])")
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
 
 
 # Пример использования
