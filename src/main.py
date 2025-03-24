@@ -1,25 +1,57 @@
-class ProductMixin:
+from abc import ABC, abstractmethod
+
+# Класс-миксин для логирования создания объектов
+class InitLoggerMixin:
+    def __new__(cls, *args, **kwargs):
+        print(f"Создан объект класса {cls.__name__} с параметрами: args={args}, kwargs={kwargs}")
+        return super().__new__(cls)
+
+# Абстрактный базовый класс BaseProduct
+class BaseProduct(ABC):
     @classmethod
     def new_product(cls, product_data: dict):
         """Общий метод для создания нового объекта с базовыми проверками."""
-        # Проверка наличия всех необходимых ключей
         required_keys = cls.required_keys
         if not required_keys.issubset(product_data.keys()):
             raise ValueError(f"Необходимые ключи: {required_keys}. Получено: {product_data.keys()}")
 
-        # Проверка типов данных
         for key, expected_type in cls.type_checks.items():
             if not isinstance(product_data[key], expected_type):
                 raise TypeError(f"{key} должно быть типа {expected_type}, получено {type(product_data[key])}")
 
-        # Проверка на неотрицательную цену
         if 'price' in product_data and product_data['price'] <= 0:
             raise ValueError("Цена не должна быть нулевой или отрицательной.")
+        if 'quantity' in product_data and product_data['quantity'] < 0:
+            raise ValueError("Количество не может быть отрицательным.")
 
-        # Создание объекта с помощью конструктора класса
         return cls(**product_data)
 
-class Product(ProductMixin):
+    @property
+    @abstractmethod
+    def name(self):
+        pass
+
+    @property
+    @abstractmethod
+    def description(self):
+        pass
+
+    @property
+    @abstractmethod
+    def price(self):
+        pass
+
+    @property
+    @abstractmethod
+    def quantity(self):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+# Класс Product с добавленным миксином
+class Product(InitLoggerMixin, BaseProduct):
     required_keys = {'name', 'description', 'price', 'quantity'}
     type_checks = {
         'name': str,
@@ -29,13 +61,18 @@ class Product(ProductMixin):
     }
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
-        self.name = name
-        self.description = description
+        self._name = name
+        self._description = description
         self.__price = price
-        self.quantity = quantity
+        self._quantity = quantity
 
-    def __str__(self):
-        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def description(self):
+        return self._description
 
     @property
     def price(self):
@@ -49,6 +86,21 @@ class Product(ProductMixin):
             raise ValueError("Цена не должна быть нулевой или отрицательной.")
         self.__price = value
 
+    @property
+    def quantity(self):
+        return self._quantity
+
+    @quantity.setter
+    def quantity(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError("Количество должно быть целым числом.")
+        if value < 0:
+            raise ValueError("Количество не может быть отрицательным.")
+        self._quantity = value
+
+    def __str__(self):
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
     def __add__(self, other):
         if not isinstance(other, Product):
             raise TypeError("Можно складывать только объекты класса Product.")
@@ -56,6 +108,7 @@ class Product(ProductMixin):
             raise TypeError("Можно складывать только объекты одного и того же класса.")
         return (self.price * self.quantity) + (other.price * other.quantity)
 
+# Класс Smartphone, наследующийся от Product
 class Smartphone(Product):
     required_keys = {'name', 'description', 'price', 'quantity', 'efficiency', 'model', 'memory', 'color'}
     type_checks = {
@@ -80,6 +133,7 @@ class Smartphone(Product):
     def __str__(self):
         return f"{super().__str__()}, Модель: {self.model}, Цвет: {self.color}"
 
+# Класс LawnGrass, наследующийся от Product
 class LawnGrass(Product):
     required_keys = {'name', 'description', 'price', 'quantity', 'country', 'germination_period', 'color'}
     type_checks = {
@@ -102,6 +156,7 @@ class LawnGrass(Product):
     def __str__(self):
         return f"{super().__str__()}, Страна: {self.country}, Цвет: {self.color}"
 
+# Класс Category для управления списком продуктов
 class Category:
     total_categories = 0
     total_products = 0
@@ -143,51 +198,17 @@ class Category:
         return f"{self.name}, количество продуктов: {total_quantity} шт."
 
 if __name__ == "__main__":
-    # Создание смартфона через new_product
-    smartphone_data = {
-        "name": "iPhone 14",
-        "description": "Смартфон от Apple",
-        "price": 999.9,
-        "quantity": 50,
-        "efficiency": "A15 Bionic",
-        "model": "14 Pro",
-        "memory": 256,
-        "color": "Space Gray"
-    }
-    smartphone = Smartphone.new_product(smartphone_data)
+    # Создание объекта Product
+    product = Product('Продукт1', 'Описание продукта', 1200, 10)
+    # Вывод:
+    # Создан объект класса Product с параметрами: args=('Продукт1', 'Описание продукта', 1200, 10), kwargs={}
 
-    # Создание газонной травы через new_product
-    lawn_grass_data = {
-        "name": "Green Lawn",
-        "description": "Газонная трава",
-        "price": 19.99,
-        "quantity": 100,
-        "country": "Russia",
-        "germination_period": "14 days",
-        "color": "Green"
-    }
-    lawn_grass = LawnGrass.new_product(lawn_grass_data)
+    # Создание объекта Smartphone
+    smartphone = Smartphone('Смартфон1', 'Описание смартфона', 10000, 5, 'Высокая', 'МодельX', 128, 'Черный')
+    # Вывод:
+    # Создан объект класса Smartphone с параметрами: args=('Смартфон1', 'Описание смартфона', 10000, 5, 'Высокая', 'МодельX', 128, 'Черный'), kwargs={}
 
-    # Попытка сложить смартфон и газонную траву
-    try:
-        total_cost = smartphone + lawn_grass
-        print(f"Общая стоимость товаров: {total_cost}")
-    except TypeError as e:
-        print(e)  # Ожидаем: "Можно складывать только объекты одного и того же класса."
-
-    # Создание второго смартфона
-    smartphone2_data = {
-        "name": "Samsung Galaxy S21",
-        "description": "Смартфон от Samsung",
-        "price": 899.99,
-        "quantity": 30,
-        "efficiency": "Exynos 2100",
-        "model": "S21",
-        "memory": 128,
-        "color": "Phantom Black"
-    }
-    smartphone2 = Smartphone.new_product(smartphone2_data)
-
-    # Сложение двух смартфонов
-    total_smartphones = smartphone + smartphone2
-    print(f"Общая стоимость смартфонов: {total_smartphones}")
+    # Создание объекта LawnGrass
+    lawn_grass = LawnGrass('Трава1', 'Описание травы', 500, 20, 'Россия', '10 дней', 'Зелёный')
+    # Вывод:
+    # Создан объект класса LawnGrass с параметрами: args=('Трава1', 'Описание травы', 500, 20, 'Россия', '10 дней', 'Зелёный'), kwargs={}
