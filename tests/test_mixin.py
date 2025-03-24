@@ -3,6 +3,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 from src.main import *
 
+
 # Предполагается, что классы Product, Smartphone, LawnGrass и миксин InitLoggerMixin уже определены
 
 class TestInitLoggerMixin(unittest.TestCase):

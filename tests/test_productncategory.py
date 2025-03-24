@@ -2,6 +2,7 @@ import unittest
 
 from src.main import Product, Category
 
+
 class TestProduct(unittest.TestCase):
     def setUp(self):
         # Данные для создания продукта

@@ -1,21 +1,24 @@
 from abc import ABC, abstractmethod
 
+
 # Класс-миксин для логирования создания объектов
 class InitLoggerMixin:
+
     def __new__(cls, *args, **kwargs):
-        print(f"Создан объект класса {cls.__name__} с параметрами: args={args}, kwargs={kwargs}")
+        print(f"Создан объект класса {cls.__name__} с параметрами:{args}, {kwargs}")
         return super().__new__(cls)
+
 
 # Абстрактный базовый класс BaseProduct
 class BaseProduct(ABC):
     @classmethod
     def new_product(cls, product_data: dict):
         """Общий метод для создания нового объекта с базовыми проверками."""
-        required_keys = cls.required_keys
+        required_keys = cls.required_keys  # type: ignore[attr-defined]
         if not required_keys.issubset(product_data.keys()):
             raise ValueError(f"Необходимые ключи: {required_keys}. Получено: {product_data.keys()}")
 
-        for key, expected_type in cls.type_checks.items():
+        for key, expected_type in cls.type_checks.items():  # type: ignore[attr-defined]
             if not isinstance(product_data[key], expected_type):
                 raise TypeError(f"{key} должно быть типа {expected_type}, получено {type(product_data[key])}")
 
@@ -24,7 +27,7 @@ class BaseProduct(ABC):
         if 'quantity' in product_data and product_data['quantity'] < 0:
             raise ValueError("Количество не может быть отрицательным.")
 
-        return cls(**product_data)
+        return cls(**product_data)  # type: ignore[attr-defined]
 
     @property
     @abstractmethod
@@ -49,6 +52,7 @@ class BaseProduct(ABC):
     @abstractmethod
     def __str__(self):
         pass
+
 
 # Класс Product с добавленным миксином
 class Product(InitLoggerMixin, BaseProduct):
@@ -108,6 +112,7 @@ class Product(InitLoggerMixin, BaseProduct):
             raise TypeError("Можно складывать только объекты одного и того же класса.")
         return (self.price * self.quantity) + (other.price * other.quantity)
 
+
 # Класс Smartphone, наследующийся от Product
 class Smartphone(Product):
     required_keys = {'name', 'description', 'price', 'quantity', 'efficiency', 'model', 'memory', 'color'}
@@ -133,6 +138,7 @@ class Smartphone(Product):
     def __str__(self):
         return f"{super().__str__()}, Модель: {self.model}, Цвет: {self.color}"
 
+
 # Класс LawnGrass, наследующийся от Product
 class LawnGrass(Product):
     required_keys = {'name', 'description', 'price', 'quantity', 'country', 'germination_period', 'color'}
@@ -155,6 +161,7 @@ class LawnGrass(Product):
 
     def __str__(self):
         return f"{super().__str__()}, Страна: {self.country}, Цвет: {self.color}"
+
 
 # Класс Category для управления списком продуктов
 class Category:
@@ -191,24 +198,20 @@ class Category:
     def products_info(self):
         if not self.__products:
             return "В категории нет товаров."
-        return "\n".join(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт." for product in self.__products)
+        return "\n".join(
+            f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт." for product in self.__products)
 
     def __str__(self):
         total_quantity = sum(product.quantity for product in self.__products)
         return f"{self.name}, количество продуктов: {total_quantity} шт."
 
+
 if __name__ == "__main__":
     # Создание объекта Product
     product = Product('Продукт1', 'Описание продукта', 1200, 10)
-    # Вывод:
-    # Создан объект класса Product с параметрами: args=('Продукт1', 'Описание продукта', 1200, 10), kwargs={}
 
     # Создание объекта Smartphone
     smartphone = Smartphone('Смартфон1', 'Описание смартфона', 10000, 5, 'Высокая', 'МодельX', 128, 'Черный')
-    # Вывод:
-    # Создан объект класса Smartphone с параметрами: args=('Смартфон1', 'Описание смартфона', 10000, 5, 'Высокая', 'МодельX', 128, 'Черный'), kwargs={}
 
     # Создание объекта LawnGrass
     lawn_grass = LawnGrass('Трава1', 'Описание травы', 500, 20, 'Россия', '10 дней', 'Зелёный')
-    # Вывод:
-    # Создан объект класса LawnGrass с параметрами: args=('Трава1', 'Описание травы', 500, 20, 'Россия', '10 дней', 'Зелёный'), kwargs={}

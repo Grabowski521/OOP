@@ -2,6 +2,7 @@ import unittest
 
 from src.main import Product, Smartphone, LawnGrass
 
+
 class TestProductAddition(unittest.TestCase):
     def test_add_same_class(self):
         """Проверка сложения двух объектов одного класса (Smartphone)."""
@@ -66,6 +67,7 @@ class TestProductAddition(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             total = product + non_product
         self.assertEqual(str(context.exception), "Можно складывать только объекты класса Product.")
+
 
 if __name__ == '__main__':
     unittest.main()
