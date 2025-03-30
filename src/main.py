@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-
-# Класс-миксин для логирования создания объектов
 class InitLoggerMixin:
 
     def __new__(cls, *args, **kwargs):
@@ -9,7 +7,6 @@ class InitLoggerMixin:
         return super().__new__(cls)
 
 
-# Абстрактный базовый класс BaseProduct
 class BaseProduct(ABC):
     @classmethod
     def new_product(cls, product_data: dict):
@@ -65,6 +62,8 @@ class Product(InitLoggerMixin, BaseProduct):
     }
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
+        if quantity == 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
         self._name = name
         self._description = description
         self.__price = price
@@ -163,7 +162,6 @@ class LawnGrass(Product):
         return f"{super().__str__()}, Страна: {self.country}, Цвет: {self.color}"
 
 
-# Класс Category для управления списком продуктов
 class Category:
     total_categories = 0
     total_products = 0
@@ -194,6 +192,13 @@ class Category:
             raise ValueError("Количество товара должно быть неотрицательным целым числом.")
         product.quantity = new_quantity
 
+    def average_price(self):
+        try:
+            total_price = sum(product.price for product in self.__products)
+            return total_price / len(self.__products)
+        except ZeroDivisionError:
+            return 0
+
     @property
     def products_info(self):
         if not self.__products:
@@ -208,10 +213,31 @@ class Category:
 
 if __name__ == "__main__":
     # Создание объекта Product
-    product = Product('Продукт1', 'Описание продукта', 1200, 10)
+    product = Product('Продукт1', 'Описание продукта', 1200, 10)  # Работает нормально
+    print(product)
+
+    # Попытка создать продукт с нулевым количеством
+    try:
+        zero_product = Product('Нулевой продукт', 'Тест', 500, 0)
+    except ValueError as e:
+        print(f"Ошибка: {e}")
 
     # Создание объекта Smartphone
     smartphone = Smartphone('Смартфон1', 'Описание смартфона', 10000, 5, 'Высокая', 'МодельX', 128, 'Черный')
+    print(smartphone)
 
     # Создание объекта LawnGrass
     lawn_grass = LawnGrass('Трава1', 'Описание травы', 500, 20, 'Россия', '10 дней', 'Зелёный')
+    print(lawn_grass)
+
+    # Создание категории и добавление товаров
+    category = Category('Тестовая категория', 'Описание категории')
+    print(f"Средняя цена (пустая категория): {category.average_price()}")  # Должно быть 0
+
+    category.add_product(product)
+    category.add_product(smartphone)
+    category.add_product(lawn_grass)
+
+    # Вывод средней цены
+    print(f"Средняя цена (с товарами): {category.average_price()}")
+    print(category.products_info)
